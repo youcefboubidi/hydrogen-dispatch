@@ -1,9 +1,10 @@
-# Phase 0 environment (PROJECT_PLAN.md section 6), restricted to what Phases 0-3 need.
+# Phase 0 environment (PROJECT_PLAN.md section 6), restricted to what Phases 0-5 need.
 # Pinned to the versions the Phase 2 ETAP validation was run with (Python 3.14.3).
-# Later phases add: pymoo (Phase 5), plotly + streamlit (Phases 6-7).
+# Later phases add: plotly + streamlit (Phases 6-7).
 pandapower==3.4.0
 numpy==2.3.5
 pandas==2.3.3
 jupyter==1.1.1
 matplotlib==3.11.0  # network diagrams in notebooks/validation.ipynb (dashboard charts stay Plotly, Phases 6-7)
 scipy==1.16.3  # Phase 3: electrolyzer i(P) inversion (brentq)
+pymoo==0.6.1.6  # Phase 5: PSO dispatch optimizer
