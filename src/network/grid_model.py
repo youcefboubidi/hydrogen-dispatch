@@ -85,18 +85,23 @@ def _element_index(table, name):
     return matches[0]
 
 
-def run_case(net, pv_mw, ely_in_service):
+def run_case(net, pv_mw, ely_in_service, ely_p_mw=None):
     """Set an operating point, run a Newton-Raphson load flow, return results.
 
-    Mutates ``net`` (PVA1 output, ELY service state) and leaves the pandapower
-    result tables on it. Raises pandapower's LoadflowNotConverged if the
-    Newton-Raphson solve fails.
+    Mutates ``net`` (PVA1 output, ELY setpoint and service state) and leaves
+    the pandapower result tables on it. Raises pandapower's
+    LoadflowNotConverged if the Newton-Raphson solve fails.
 
     Args:
         net: network from build_network().
         pv_mw: PVA1 AC injection in MW (0.5342 = full sun, 0.0 = night).
-        ely_in_service: True -> ELY draws its rated 800 kW / 262.9 kvar;
-            False -> electrolyzer disconnected.
+        ely_in_service: True -> ELY draws its setpoint; False -> electrolyzer
+            disconnected.
+        ely_p_mw: electrolyzer real-power setpoint [MW] (Phase 4 dispatch).
+            None (default) resets ELY to its rated 800 kW / 262.9 kvar — the
+            validated Phase 2 operating points. When given, Q scales with P to
+            hold the rated 0.95 lagging power factor (the rectifier draws the
+            commanded power at its rated pf): q = p * ELY_Q_MVAR / ELY_P_MW.
 
     Returns:
         dict with keys
@@ -119,7 +124,15 @@ def run_case(net, pv_mw, ely_in_service):
     main_bus = _element_index(net.bus, "MainBus")
     secondary_bus = _element_index(net.bus, "SecondaryBus")
 
+    if ely_p_mw is None:
+        ely_p, ely_q = ELY_P_MW, ELY_Q_MVAR
+    else:
+        ely_p = float(ely_p_mw)
+        ely_q = ely_p * (ELY_Q_MVAR / ELY_P_MW)
+
     net.sgen.at[pva1, "p_mw"] = float(pv_mw)
+    net.load.at[ely, "p_mw"] = ely_p
+    net.load.at[ely, "q_mvar"] = ely_q
     net.load.at[ely, "in_service"] = bool(ely_in_service)
 
     # Newton-Raphson to match ETAP's solver. trafo_loading="power" reproduces
