@@ -8,3 +8,6 @@ __pycache__/
 
 # Claude Code local settings
 .claude/settings.local.json
+
+# Thesis working document — kept local, not pushed to the public repo
+*.docx
