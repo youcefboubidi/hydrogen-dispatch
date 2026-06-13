@@ -59,10 +59,10 @@ class _SetpointProblem(ElementwiseProblem):
         out["F"] = self._fitness(float(x[0]))
 
 
-def _run_pso(fitness, seed):
+def _run_pso(fitness, seed, pop_size, n_gen):
     """One PSO stage; returns (best setpoint, best fitness, generations run)."""
-    res = pymoo_minimize(_SetpointProblem(fitness), PSO(pop_size=POP_SIZE),
-                         ("n_gen", N_GEN), seed=seed, verbose=False)
+    res = pymoo_minimize(_SetpointProblem(fitness), PSO(pop_size=pop_size),
+                         ("n_gen", n_gen), seed=seed, verbose=False)
     p_mw = float(np.atleast_1d(res.X)[0])
     f = float(np.atleast_1d(res.F)[0])
     return p_mw, f, int(res.algorithm.n_gen)
@@ -88,7 +88,8 @@ def _candidate_key(mode, result):
     return (1, 0.0, 0.0)
 
 
-def optimize_dispatch(g_wm2, t_amb_c, tariff_per_kwh, mode, seed=0):
+def optimize_dispatch(g_wm2, t_amb_c, tariff_per_kwh, mode, seed=0,
+                      pop_size=POP_SIZE, n_gen=N_GEN):
     """Optimal electrolyzer setpoint for one operating condition.
 
     Args:
@@ -99,6 +100,10 @@ def optimize_dispatch(g_wm2, t_amb_c, tariff_per_kwh, mode, seed=0):
             per kg, lexicographically tie-broken toward more hydrogen).
         seed: random seed for the PSO stages (stage 2 uses seed + 1), making
             runs bit-reproducible.
+        pop_size: PSO swarm size per stage; default = the Phase 5 budget.
+        n_gen: PSO generations per stage; default = the Phase 5 budget.
+            Reduced budgets must be re-validated against the analytic optima
+            (the Phase 6 budget check in scripts/run_scenarios.py does this).
 
     Returns:
         dict with keys
@@ -128,7 +133,7 @@ def optimize_dispatch(g_wm2, t_amb_c, tariff_per_kwh, mode, seed=0):
             r = ev(p_mw)
             return -r["h2_kg_per_h"] if r["feasible"] else DEATH_PENALTY
 
-        p1, f1, gens = _run_pso(fit_h2, seed)
+        p1, f1, gens = _run_pso(fit_h2, seed, pop_size, n_gen)
         n_iterations += gens
         if f1 < DEATH_PENALTY:
             p_win = p1
@@ -140,7 +145,7 @@ def optimize_dispatch(g_wm2, t_amb_c, tariff_per_kwh, mode, seed=0):
                 return r["cost_per_kg"]
             return DEATH_PENALTY
 
-        p1, c_star, gens = _run_pso(fit_cost, seed)
+        p1, c_star, gens = _run_pso(fit_cost, seed, pop_size, n_gen)
         n_iterations += gens
 
         if c_star < DEATH_PENALTY:
@@ -153,7 +158,7 @@ def optimize_dispatch(g_wm2, t_amb_c, tariff_per_kwh, mode, seed=0):
                     return -r["h2_kg_per_h"]
                 return DEATH_PENALTY
 
-            p2, f2, gens = _run_pso(fit_h2_at_best_cost, seed + 1)
+            p2, f2, gens = _run_pso(fit_h2_at_best_cost, seed + 1, pop_size, n_gen)
             n_iterations += gens
             p_win = p2 if f2 < DEATH_PENALTY else p1
 
