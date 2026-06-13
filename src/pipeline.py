@@ -31,6 +31,19 @@ V_MIN_PU = 0.95            # bus undervoltage limit [pu]
 V_MAX_PU = 1.05            # bus overvoltage limit [pu]
 LOADING_MAX_PERCENT = 100.0  # transformer/branch loading limit [%]
 
+# Shared pandapower network, built lazily once per process. Rebuilding the
+# net (a stack of fresh DataFrames) dominated evaluation time (~0.28 s/eval,
+# ~25x the load flow itself). Reuse is stateless: run_case() sets every
+# operating-point quantity (ELY p/q, PVA1 p, service state) on each call.
+_NET = None
+
+
+def _shared_network():
+    global _NET
+    if _NET is None:
+        _NET = build_network()
+    return _NET
+
 
 def evaluate_dispatch(g_wm2, t_amb_c, tariff_per_kwh, p_elz_mw):
     """Evaluate one dispatch decision end to end.
@@ -84,9 +97,9 @@ def evaluate_dispatch(g_wm2, t_amb_c, tariff_per_kwh, p_elz_mw):
             f"window: 0 (off) or [{P_MIN_MW}, {P_RATED_MW}] MW")
         return result
 
-    # c. Network feasibility at this dispatch (fresh net: stateless evaluation).
+    # c. Network feasibility at this dispatch (shared net, see _shared_network).
     ely_on = p_elz_mw > 0.0
-    case = run_case(build_network(), pv_mw=pv_mw, ely_in_service=ely_on,
+    case = run_case(_shared_network(), pv_mw=pv_mw, ely_in_service=ely_on,
                     ely_p_mw=p_elz_mw if ely_on else None)
     result["v_secondary_pu"] = case["v_secondary_pu"]
     result["trafo_loading_percent"] = case["trafo_loading_percent"]

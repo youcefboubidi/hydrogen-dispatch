@@ -89,8 +89,10 @@ def run_case(net, pv_mw, ely_in_service, ely_p_mw=None):
     """Set an operating point, run a Newton-Raphson load flow, return results.
 
     Mutates ``net`` (PVA1 output, ELY setpoint and service state) and leaves
-    the pandapower result tables on it. Raises pandapower's
-    LoadflowNotConverged if the Newton-Raphson solve fails.
+    the pandapower result tables on it. Every operating-point quantity is set
+    on every call (nothing is carried over), so a single net instance can be
+    reused across many calls — src.pipeline relies on this. Raises
+    pandapower's LoadflowNotConverged if the Newton-Raphson solve fails.
 
     Args:
         net: network from build_network().
