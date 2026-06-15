@@ -90,6 +90,13 @@ Conclusion.
     produce-ASAP): on real data, the optimizer is **~50–59 % cheaper** at
     200 kg/day (27.7 vs 67.9 constant, vs 55.8 greedy) and up to 100 % cheaper at
     low demand fully covered by solar; greedy degrades badly at high demand.
+  - the **full-year 2023 simulation** (364 days): **72.8 t H₂/yr at 45.8 DA/kg
+    average** (28.3 summer → 82.0 winter), **37 % solar-powered**; a calendar
+    heatmap (`annual_calendar.png`) and a monthly cost/solar-fraction chart
+    (`annual_monthly.png`) show the strong seasonal pattern — cheap, green
+    summers vs dear winters.
+  - a **"day in the life" animation** of the optimal dispatch (`day_animation_
+    ghardaia.gif`) for the live defense.
 - **UPDATE** the dashboard description: supervisory Streamlit view (demand input,
   schedule, network feasibility).
 
@@ -104,6 +111,15 @@ Conclusion.
 ---
 
 ## Change log (chronological)
+
+### 2026-06-15 — Full-year analysis + day-in-the-life animation
+- `scripts/run_annual.py`: full-year 2023 dispatch (364 days) → annual KPIs
+  (72.8 t/yr, 3.33 M DA/yr, 45.8 DA/kg avg, 37 % solar) and seasonal figures
+  (`annual_cost_vs_doy.png`, `annual_monthly.png`, `annual_calendar.png`) +
+  `results/tables/annual_2023.csv`.
+- `scripts/animate_day.py`: animated GIF of the optimal clear-summer dispatch.
+- Thesis impact: Ch.5 gains an "annual performance" subsection (seasonal cost
+  and solar-fraction) and a live-demo animation.
 
 ### 2026-06-15 — Real PV: CAMS irradiance → PySAM, 15-min accounting
 - Replaced the engineering-model/PVGIS PV path in the dispatch with the **real
