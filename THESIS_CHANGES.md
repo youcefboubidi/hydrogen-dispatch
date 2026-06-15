@@ -100,6 +100,30 @@ Conclusion.
 - **UPDATE** the dashboard description: supervisory Streamlit view (demand input,
   schedule, network feasibility).
 
+### Ch.4 — Modeling (Stage 2 addition: battery)
+- **ADD a battery/ESS model and its dispatch.** Battery: energy capacity, power
+  rating, round-trip efficiency, starts empty. **Optimizer architecture (document
+  and defend):** the dispatch is **decomposed** — PSO searches only the 24 hourly
+  electrolyzer setpoints (the non-linear, demand-constrained part), and for each
+  candidate the **battery is operated optimally by a linear program** (charge /
+  discharge / SOC minimizing grid cost vs the time-of-use price, subject to power
+  and energy limits). Rationale to state: a joint 48-variable PSO over
+  setpoints+battery was found to converge unreliably (non-monotonic sizing); the
+  decomposition gives provably-optimal storage per candidate, reproducible and
+  monotone results, and a low-dimensional PSO.
+- **Ch.5 battery results.** Day with/without battery: it charges on cheap night
+  power + surplus solar and discharges through the peak, cutting energy cost
+  53.2 → 39.2 DA/kg (−26 % at 4 MWh, high-demand day) — a real dispatch/control
+  behaviour. **Economic verdict (supporting feasibility, NOT a headline):** with
+  amortized CAPEX (250 $/kWh, CRF 0.133), LCOH is minimized at **0 MWh** — storage
+  is **not cost-justified under the CREG tariff**; break-even on pure arbitrage is
+  ~20 $/kWh (≈12× below today's ~250). It pays only under much higher price
+  volatility (spot/wholesale) or far cheaper batteries.
+- **Discipline framing:** keep battery *economics* as a supporting section; the
+  *dispatch behaviour* is the control-relevant part. Pending decision: re-frame
+  the whole thesis around the **supervisory/MPC controller** (states, inputs,
+  disturbances, constraints, cost functional) so it reads as Control Engineering.
+
 ### Ch.6 — Conclusion
 - **UPDATE** the contribution statement: an automated, ETAP-validated dispatch
   optimizer that, on real weather and the real tariff, finds non-obvious
@@ -111,6 +135,18 @@ Conclusion.
 ---
 
 ## Change log (chronological)
+
+### 2026-06-15 — Stage 2: battery (PSO setpoints + optimal-LP storage)
+- `src/battery_dispatch.py`: battery dispatch by decomposition — 24-var PSO over
+  electrolyzer setpoints, battery operated optimally by a scipy-HiGHS linear
+  program per candidate. Verified monotone: on the clear-summer day at 280 kg,
+  energy cost falls 53.2 → 46.5 → 43.1 → 39.2 DA/kg for 1/2/4 MWh (−12.6/−19/−26 %),
+  SOC bounded, demand met. (First attempt — a joint 48-var PSO — under-converged
+  and gave a non-monotonic sizing curve; switched to the decomposition.)
+- `scripts/run_battery.py`: day with/without battery + economic sizing figure
+  (energy cost vs LCOH including amortized battery CAPEX).
+- Thesis impact: Ch.4 gains the battery model + optimizer-architecture rationale;
+  Ch.5 gains the battery results + the economic verdict on storage (see below).
 
 ### 2026-06-15 — Full-year analysis + day-in-the-life animation
 - `scripts/run_annual.py`: full-year 2023 dispatch (364 days) → annual KPIs
