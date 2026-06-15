@@ -1,18 +1,15 @@
-"""Quantify the value of the smart dispatch vs traditional, time-blind operation.
+"""Quantify the smart dispatch vs traditional, time-blind operation (real data).
 
-Same hydrogen demand, same real Ghardaïa day, same real CREG time-of-use tariff —
-three ways to run the electrolyzer:
+Same hydrogen demand, same real Ghardaïa PySAM PV day, same real CREG
+time-of-use tariff — three ways to run the electrolyzer:
 
-  optimized  - our PSO least-cost schedule (shifts load to cheap/solar hours,
-               dodges the 17-21 h peak)
+  optimized  - our PSO least-cost hourly schedule (15-min accounting)
   constant   - "traditional baseload": one steady setpoint sized to meet the
                daily demand, no awareness of the time-of-use price
-  greedy     - "produce ASAP": run flat-out from midnight until the demand is
-               made, then stop
+  greedy     - "produce ASAP": full blast from midnight until demand met, then stop
 
-All three are billed identically and all meet the same daily kg, so the cost
-difference is purely the value of *intelligent timing*. Lower cost for the same
-hydrogen = higher margin, i.e. more profitable.
+All meet the same daily kg and are billed identically, so the cost gap is purely
+the value of intelligent timing. Lower cost for the same hydrogen = more profit.
 
 Run from the repo root:  python scripts/compare_baselines.py
 """
@@ -31,9 +28,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 from pymoo.config import Config
 
-from src.day_dispatch import (HOURS, P_MIN_MW, P_RATED_MW, _mdot_fast,
-                              evaluate_day, optimize_day)
-from src.profiles import representative_days
+from src.day_dispatch import (HOURS, P_MIN_MW, P_RATED_MW, evaluate_day,
+                              mdot_fast, optimize_day)
+from src.pv_pysam import representative_days
 
 Config.warnings["not_compiled"] = False
 
@@ -41,15 +38,15 @@ FIGURES_DIR = REPO_ROOT / "results" / "figures"
 HEADLINE_DEMAND_KG = 200.0
 
 
-def _power_for_total(demand_kg):
-    """Constant setpoint whose 24 h output equals demand_kg (bisection)."""
-    target_hourly = demand_kg / HOURS
-    if _mdot_fast(P_MIN_MW) >= target_hourly:
-        return P_MIN_MW  # cannot run below the turndown floor
+def _const_setpoint(demand_kg):
+    """Constant hourly setpoint whose 24 h output equals demand_kg (bisection)."""
+    target = demand_kg / HOURS
+    if mdot_fast(P_MIN_MW) >= target:
+        return P_MIN_MW
     lo, hi = P_MIN_MW, P_RATED_MW
     for _ in range(60):
         mid = 0.5 * (lo + hi)
-        if _mdot_fast(mid) < target_hourly:
+        if mdot_fast(mid) < target:
             lo = mid
         else:
             hi = mid
@@ -57,67 +54,64 @@ def _power_for_total(demand_kg):
 
 
 def constant_schedule(demand_kg):
-    """Traditional baseload: one steady setpoint, all 24 h, time-blind."""
-    return [_power_for_total(demand_kg)] * HOURS
+    """Traditional baseload: one steady hourly setpoint, time-blind."""
+    return [_const_setpoint(demand_kg)] * HOURS
 
 
 def greedy_schedule(demand_kg):
-    """Produce ASAP: full blast from hour 0 until the demand is met, then off."""
+    """Produce ASAP: full blast from hour 0 until demand met, then off."""
     sched = [0.0] * HOURS
     made = 0.0
     for h in range(HOURS):
         remaining = demand_kg - made
         if remaining <= 0:
             break
-        if _mdot_fast(P_RATED_MW) <= remaining:
+        if mdot_fast(P_RATED_MW) <= remaining:
             sched[h] = P_RATED_MW
-            made += _mdot_fast(P_RATED_MW)
+            made += mdot_fast(P_RATED_MW)
         else:
-            # partial last hour: smallest setpoint that finishes the demand
             lo, hi = P_MIN_MW, P_RATED_MW
             for _ in range(60):
                 mid = 0.5 * (lo + hi)
-                if _mdot_fast(mid) < remaining:
+                if mdot_fast(mid) < remaining:
                     lo = mid
                 else:
                     hi = mid
             sched[h] = hi
-            made += _mdot_fast(hi)
+            made += mdot_fast(hi)
     return sched
 
 
-def cost_per_kg(schedule, g, ta):
-    r = evaluate_day(schedule, g, ta)
+def cost_per_kg(hourly_setpoints, pv_15min):
+    r = evaluate_day(hourly_setpoints, pv_15min)
     return (r["total_cost_da"] / r["total_h2_kg"]) if r["total_h2_kg"] > 0 else 0.0
 
 
 def main():
     FIGURES_DIR.mkdir(parents=True, exist_ok=True)
     t0 = time.perf_counter()
-    prof = representative_days("ghardaia")["clear_summer"]
-    g, ta = prof["g_wm2"], prof["t_amb_c"]
+    prof = representative_days()["clear_summer"]
+    pv = prof["pv_mw"]
 
-    # Headline comparison at the demo demand.
-    opt = optimize_day(g, ta, HEADLINE_DEMAND_KG, seed=0)
+    opt = optimize_day(pv, HEADLINE_DEMAND_KG, seed=0)
     c_opt = opt["cost_per_kg_da"]
-    c_con = cost_per_kg(constant_schedule(HEADLINE_DEMAND_KG), g, ta)
-    c_grd = cost_per_kg(greedy_schedule(HEADLINE_DEMAND_KG), g, ta)
+    c_con = cost_per_kg(constant_schedule(HEADLINE_DEMAND_KG), pv)
+    c_grd = cost_per_kg(greedy_schedule(HEADLINE_DEMAND_KG), pv)
     print(f"=== {HEADLINE_DEMAND_KG:.0f} kg/day, clear summer ({prof['date']}) ===")
-    print(f"  optimized (smart) : {c_opt:6.1f} DA/kg")
-    print(f"  constant baseload : {c_con:6.1f} DA/kg  "
+    print(f"  optimized (smart)  : {c_opt:6.1f} DA/kg")
+    print(f"  constant baseload  : {c_con:6.1f} DA/kg  "
           f"(smart saves {100*(c_con-c_opt)/c_con:4.1f} %)")
     print(f"  greedy produce-ASAP: {c_grd:6.1f} DA/kg  "
           f"(smart saves {100*(c_grd-c_opt)/c_grd:4.1f} %)\n")
 
-    # Savings across the demand range.
     demands = list(range(60, 341, 20))
     rows = {"optimized": [], "constant": [], "greedy": []}
     print(f"  {'demand':>6}  {'opt':>6} {'const':>6} {'greedy':>6}  "
           f"{'save_vs_const':>13} {'save_vs_greedy':>14}")
     for d in demands:
-        co = optimize_day(g, ta, d, seed=0)["cost_per_kg_da"]
-        cc = cost_per_kg(constant_schedule(d), g, ta)
-        cg = cost_per_kg(greedy_schedule(d), g, ta)
+        co = optimize_day(pv, d, seed=0)["cost_per_kg_da"]
+        cc = cost_per_kg(constant_schedule(d), pv)
+        cg = cost_per_kg(greedy_schedule(d), pv)
         rows["optimized"].append(co)
         rows["constant"].append(cc)
         rows["greedy"].append(cg)
@@ -136,7 +130,7 @@ def main():
     ax.set_xlabel("Daily hydrogen demand [kg/day]")
     ax.set_ylabel("Hydrogen cost [DA/kg]")
     ax.set_title("Smart dispatch vs traditional operation — Ghardaïa clear "
-                 "summer day\n(same demand, same weather, same CREG tariff)")
+                 "summer day\n(real CAMS+PySAM PV, same demand, same CREG tariff)")
     ax.grid(alpha=0.3)
     ax.legend()
     path = FIGURES_DIR / "baseline_comparison_ghardaia.png"
