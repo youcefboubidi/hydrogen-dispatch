@@ -3,6 +3,9 @@
 __pycache__/
 *.pyc
 
+# LibreOffice/Excel lock files
+.~lock.*#
+
 # Jupyter
 .ipynb_checkpoints/
 
@@ -12,6 +15,7 @@ __pycache__/
 # Thesis working document — kept local, not pushed to the public repo
 *.docx
 
-# Raw multi-year CAMS source (16 MB) — regenerate from the CAMS portal with the
-# params in its header; the processed SAM file + PySAM generation are committed.
+# Raw weather sources — regenerate from CAMS / Copernicus CDS; the processed SAM
+# file + PySAM generation are committed.
 Ghardaia CAMS Radiation Service.csv
+ERA5 hourly data.csv
