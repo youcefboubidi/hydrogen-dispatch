@@ -48,6 +48,15 @@ Conclusion.
   station).
 
 ### Ch.4 — Modeling
+- **CONTROL FORMULATION (the control-engineering core — lead with this).** Cast
+  the dispatch as feedback control of the validated plant: *state* = time,
+  battery SOC, cumulative H₂; *control inputs* = electrolyzer setpoint (+ battery
+  power); *measured disturbance* = PV (weather), with deterministic time-of-use
+  prices; *constraints* = bus voltage 0.95–1.05 pu, transformer ≤ 100 %,
+  electrolyzer operating window, daily H₂ demand; *cost functional* = daily grid
+  cost. *Controller* = **receding-horizon MPC** (re-optimize over the remaining
+  horizon on a forecast, apply the first action, re-plan on realized PV).
+  Benchmarks: perfect-foresight (bound) and a reactive rule-based controller.
 - **PV:** the **production** PV is **NREL SAM (PySAM)** — single-axis tracking,
   ~669 kWp DC / 534 kW AC inverter (matched to the ETAP 0.5342 MW interconnect),
   driven by the real CAMS irradiance → 15-min AC time series. The engineering
@@ -135,6 +144,32 @@ Conclusion.
 ---
 
 ## Change log (chronological)
+
+### 2026-06-15 — Control core: MPC supervisory controller + 3D digital twin
+- `src/mpc.py`: the dispatch **recast as feedback control**. Three controllers:
+  perfect-foresight (open-loop optimum, the bound); **MPC** (receding-horizon —
+  day-ahead persistence forecast + intraday clearness correction, re-optimize
+  each hour, apply the first action, re-plan as actual PV is realized);
+  reactive rule-based (time-blind constant rate). Demo day 2023-04-08 (clear day
+  forecast from a cloudy one — large forecast error): MPC **35.2 vs 33.0 DA/kg
+  optimum (+6.4 %)** and **56 % cheaper than rule-based** — i.e. it rejects the
+  PV disturbance. `scripts/run_mpc_comparison.py` → multi-day figure + CSV.
+- `scripts/export_plant_state.py` + `app/`: the real per-timestep load-flow state
+  (bus voltages, T1 loading, device currents/powers) from the ETAP-validated
+  pandapower model → `plant_state.json` / `plant_data.js`; a **3D three.js web
+  app** (`app/viz_*`) renders it ETAP-style with a time slider — every value real.
+- Thesis impact: **re-frames the thesis as Control Engineering.** Ch.4 gains the
+  control formulation; Ch.5 gains the control-strategy comparison + the live demo;
+  Ch.6 contribution becomes "a supervisory (MPC) controller", with the economics
+  and data as the objective/disturbance inputs.
+
+### 2026-06-15 — ERA5 temp/wind: real 2023 replaces the placeholder
+- `data/make_sam_weather.py` now fuses CAMS irradiance with **real ERA5 2023**
+  temperature + wind (nearest cell to Ghardaïa, wind = √(u²+v²)), not the
+  PVGIS-TMY placeholder. Regenerated `data/ghardaia_sam_2023_15min.csv`
+  (temp mean 22.9 °C, max 47.5; irradiance unchanged). **Action:** re-run PySAM
+  on this file to get the final fully-actual-2023 generation, then the dispatch /
+  annual / battery results regenerate on it. Provenance is now CAMS + ERA5 + SAM.
 
 ### 2026-06-15 — Stage 2: battery (PSO setpoints + optimal-LP storage)
 - `src/battery_dispatch.py`: battery dispatch by decomposition — 24-var PSO over
