@@ -1,9 +1,9 @@
 // 3D digital twin of the Ghardaïa solar-hydrogen plant.
 // Every displayed value comes from window.PLANT_STATE (real CAMS+ERA5 -> PySAM
 // PV, ETAP-validated pandapower load flow). No invented numbers.
-import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+// three.js, OrbitControls and CSS2DRenderer/CSS2DObject are loaded as classic
+// global scripts in index.html and live on the THREE namespace — no ES-module
+// imports (ES modules do not load from file:// due to browser CORS).
 
 const DATA = window.PLANT_STATE;
 if (!DATA || !DATA.timeseries) {
@@ -38,14 +38,14 @@ renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
 root.appendChild(renderer.domElement);
 
-const labelRenderer = new CSS2DRenderer();
+const labelRenderer = new THREE.CSS2DRenderer();
 labelRenderer.setSize(innerWidth, innerHeight);
 labelRenderer.domElement.style.position = 'absolute';
 labelRenderer.domElement.style.top = '0';
 labelRenderer.domElement.style.pointerEvents = 'none';
 root.appendChild(labelRenderer.domElement);
 
-const controls = new OrbitControls(camera, renderer.domElement);
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.target.set(0, 1.5, 0);
 controls.maxPolarAngle = Math.PI / 2.05;
@@ -182,7 +182,7 @@ const LABEL_Y = { U1: 6, MainBus: 3.2, T1: 3.6, SecondaryBus: 3.2, PVA1: 3.2, EL
 for (const id of Object.keys(POS)) {
   const div = document.createElement('div');
   div.className = 'dev-label';
-  const obj = new CSS2DObject(div);
+  const obj = new THREE.CSS2DObject(div);
   obj.position.set(POS[id].x, LABEL_Y[id], POS[id].z);
   scene.add(obj);
   LABELS[id] = div;

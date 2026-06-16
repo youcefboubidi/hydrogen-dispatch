@@ -5,16 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Solar-Hydrogen Plant — 3D Digital Twin</title>
 <link rel="stylesheet" href="styles.css" />
+<!-- three.js (classic global build) + addons, bundled locally so the app runs by
+     double-clicking index.html — no server, no internet, no ES-module/CORS issues -->
+<script src="lib/three.min.js"></script>
+<script src="lib/OrbitControls.js"></script>
+<script src="lib/CSS2DRenderer.js"></script>
 <!-- PLANT_STATE: the ONLY source of values -->
-<script src="../plant_data.js"></script>
-<script type="importmap">
-{
-  "imports": {
-    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-  }
-}
-</script>
+<script src="plant_data.js"></script>
 </head>
 <body>
   <!-- ===== Header ===== -->
@@ -64,6 +61,6 @@
 
   <div id="errbox" hidden></div>
 
-  <script type="module" src="app.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>

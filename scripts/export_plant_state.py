@@ -27,7 +27,7 @@ from src.pv_pysam import representative_days
 
 Config.warnings["not_compiled"] = False
 
-APP_DIR = REPO_ROOT / "app"
+APP_DIR = REPO_ROOT / "app" / "plant_3d"
 SQRT3 = 3.0 ** 0.5
 DAY = "clear_summer"
 DEMAND_KG = 200.0
