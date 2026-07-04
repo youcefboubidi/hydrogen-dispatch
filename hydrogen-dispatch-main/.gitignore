@@ -19,9 +19,3 @@ __pycache__/
 # file + PySAM generation are committed.
 Ghardaia CAMS Radiation Service.csv
 ERA5 hourly data.csv
-
-# Node dependencies (reinstall via package.json)
-node_modules/
-
-# Duplicate zip extract, not part of the tracked project
-with-dashboard/

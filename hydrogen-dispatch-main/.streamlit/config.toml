@@ -1,0 +1,16 @@
+# Streamlit theme for the Hydrogen Dispatch dashboard.
+# Fine visual polish (cards, hero, tabs) is layered on in app/_theme.py via CSS;
+# this sets the base palette so native widgets match.
+[theme]
+base = "light"
+primaryColor = "#1d4ed8"
+backgroundColor = "#f4f6fb"
+secondaryBackgroundColor = "#ffffff"
+textColor = "#0f172a"
+font = "sans serif"
+
+[ui]
+hideTopBar = false
+
+[client]
+toolbarMode = "minimal"

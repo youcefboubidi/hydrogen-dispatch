@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Solar-Hydrogen Plant — 3D Digital Twin</title>
+<link rel="stylesheet" href="styles.css" />
+<!-- three.js (classic global build) + addons, bundled locally so the app runs by
+     double-clicking index.html — no server, no internet, no ES-module/CORS issues -->
+<script src="lib/three.min.js"></script>
+<script src="lib/OrbitControls.js"></script>
+<script src="lib/CSS2DRenderer.js"></script>
+<!-- PLANT_STATE: the ONLY source of values -->
+<script src="plant_data.js"></script>
+</head>
+<body>
+  <!-- ===== Header ===== -->
+  <header id="header">
+    <div class="h-left">
+      <div class="h-title">SOLAR&ndash;HYDROGEN PLANT &middot; 3D DIGITAL TWIN</div>
+      <div class="h-sub" id="h-site">&mdash;</div>
+    </div>
+    <div class="h-meta" id="h-meta"><!-- filled by JS --></div>
+  </header>
+
+  <!-- ===== 3D canvas mount ===== -->
+  <div id="scene-root">
+    <div id="label-root"></div>
+  </div>
+
+  <!-- ===== Legend ===== -->
+  <div id="legend">
+    <div class="lg-title">ETAP STATUS</div>
+    <div class="lg-row"><span class="sw sw-green"></span>Within limits</div>
+    <div class="lg-row"><span class="sw sw-amber"></span>Marginal</div>
+    <div class="lg-row"><span class="sw sw-red"></span>Violation</div>
+    <hr/>
+    <div class="lg-row"><span class="sw sw-import"></span>Grid import</div>
+    <div class="lg-row"><span class="sw sw-export"></span>Grid export</div>
+    <div class="lg-row"><span class="sw sw-pv"></span>PV &rarr; bus</div>
+    <div class="lg-row"><span class="sw sw-load"></span>Bus &rarr; electrolyzer</div>
+  </div>
+
+  <!-- ===== Bottom control bar ===== -->
+  <footer id="controls">
+    <button id="btn-play" title="Play / Pause">&#9658;</button>
+    <div class="clock" id="clock">00:00</div>
+    <input id="slider" type="range" min="0" max="95" step="1" value="0" />
+    <div class="step-lbl">step <span id="step-num">0</span>/95</div>
+    <div class="spd">
+      <label>speed</label>
+      <select id="speed">
+        <option value="500">0.5&times;</option>
+        <option value="250" selected>1&times;</option>
+        <option value="120">2&times;</option>
+        <option value="60">4&times;</option>
+      </select>
+    </div>
+    <div class="src" id="src-cap">&mdash;</div>
+  </footer>
+
+  <div id="errbox" hidden></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

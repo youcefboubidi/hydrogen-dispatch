@@ -1,0 +1,24 @@
+{
+  "name": "hydrogen-dispatch",
+  "version": "1.0.0",
+  "description": "Automatic optimization of hydrogen production by dispatching solar and grid power to a PEM electrolyzer under variable environmental and operating conditions, validated against an ETAP-based electrical digital twin. M2 Automation thesis project (Boumerdes), simulation-only.",
+  "main": "build_deck.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/youcefboubidi/hydrogen-dispatch.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/youcefboubidi/hydrogen-dispatch/issues"
+  },
+  "homepage": "https://github.com/youcefboubidi/hydrogen-dispatch#readme",
+  "dependencies": {
+    "pptxgenjs": "^4.0.1",
+    "puppeteer-core": "^25.2.1"
+  }
+}

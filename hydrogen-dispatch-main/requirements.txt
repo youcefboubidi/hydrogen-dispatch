@@ -8,4 +8,4 @@ matplotlib==3.11.0  # network diagrams in notebooks/validation.ipynb + dashboard
 scipy==1.16.3  # Phase 3: electrolyzer i(P) inversion (brentq)
 pymoo==0.6.1.6  # Phase 5: PSO dispatch optimizer
 streamlit==1.58.0  # Phase 7: supervisory dashboard (app/dashboard.py)
-plotly==6.1.2  # Phase 7: interactive charts in the dashboard tabs
+plotly==6.1.2      # Phase 7: interactive charts in the dashboard
